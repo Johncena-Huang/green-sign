@@ -20,55 +20,89 @@
       <div class="invisible"><img src="../assets/logo.png" /></div>
     </div>
     <div class="wrapper">
-      <!-- pen colors -->
-      <div class="pen-colors">
-        <label class="pen-colors__container">
-          <input
-            type="radio"
-            name="color"
-            class="pen-colors__input"
-            value="black"
-            checked
-            v-model="penColor"
-          />
-          <span class="pen-colors__color pen-colors__color--black"></span>
-        </label>
-        <label class="pen-colors__container">
-          <input
-            type="radio"
-            name="color"
-            class="pen-colors__input"
-            value="blue"
-            v-model="penColor"
-          />
-          <span class="pen-colors__color pen-colors__color--blue"></span>
-        </label>
-        <label class="pen-colors__container">
-          <input
-            type="radio"
-            name="color"
-            class="pen-colors__input"
-            value="red"
-            v-model="penColor"
-          />
-          <span class="pen-colors__color pen-colors__color--red"></span>
-        </label>
-      </div>
-      <!-- signature board -->
-      <div class="signature-board" ref="canvasWrapper">
-        <canvas
-          class="signature-board__canvas"
-          width="500"
-          height="224"
-          ref="canvas"
-          @mousedown.prevent="handleMouseDown"
-          @mousemove.prevent="handleMouseMove"
-          @mouseenter.prevent="handleMouseEnter"
-          @touchstart.prevent="handleTouchStart"
-          @touchmove.prevent="handleTouchMove"
-          @touchend.prevent="handleStopTouching"
-          @touchcancel.prevent="handleStopTouching"
-        ></canvas>
+      <div class="signature-group">
+        <!-- Signature pad -->
+        <div class="signature-pad" v-if="signatureMethods === 'hand-write'">
+          <!-- pen colors -->
+          <div class="color-picker">
+            <label class="color-picker__color">
+              <input
+                type="radio"
+                name="color"
+                class="color-picker__input"
+                value="black"
+                checked
+                v-model="penColor"
+              />
+              <span
+                class="color-picker__label color-picker__label--black"
+              ></span>
+            </label>
+            <label class="color-picker__color">
+              <input
+                type="radio"
+                name="color"
+                class="color-picker__input"
+                value="blue"
+                v-model="penColor"
+              />
+              <span
+                class="color-picker__label color-picker__label--blue"
+              ></span>
+            </label>
+            <label class="color-picker__color">
+              <input
+                type="radio"
+                name="color"
+                class="color-picker__input"
+                value="red"
+                v-model="penColor"
+              />
+              <span class="color-picker__label color-picker__label--red"></span>
+            </label>
+          </div>
+          <!-- signature board -->
+          <div class="signature-board" ref="canvasWrapper">
+            <canvas
+              class="signature-board__canvas"
+              width="590"
+              height="224"
+              ref="canvas"
+              @mousedown.prevent="handleMouseDown"
+              @mousemove.prevent="handleMouseMove"
+              @mouseenter.prevent="handleMouseEnter"
+              @touchstart.prevent="handleTouchStart"
+              @touchmove.prevent="handleTouchMove"
+              @touchend.prevent="handleStopTouching"
+              @touchcancel.prevent="handleStopTouching"
+            ></canvas>
+          </div>
+        </div>
+        <!-- Signature importer -->
+        <div class="signature-importer" v-else>
+          <div class="signature-importer__renderer">
+            <div
+              class="signature-importer__uploader"
+              v-show="!importedSignatureURL"
+            >
+              <input
+                class="signature-importer__input"
+                type="file"
+                accept="image/*"
+                id="file-upload"
+                @change.prevent="handleSignatureUpload"
+              />
+              <label class="signature-importer__input-label" for="file-upload"
+                >請選擇檔案</label
+              >
+            </div>
+            <img
+              :src="importedSignatureURL"
+              alt="imported-signature"
+              v-show="importedSignatureURL"
+            />
+          </div>
+        </div>
       </div>
       <!-- signature controls -->
       <div class="signature-controls">
@@ -92,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits } from "vue";
+import { ref, onMounted, onUnmounted, defineEmits, watch } from "vue";
 // ======================= EMITS =======================
 const emit = defineEmits(["signature-complete"]);
 // ======================= DATA =======================
@@ -105,6 +139,7 @@ const emit = defineEmits(["signature-complete"]);
  * @type {Method}
  */
 const signatureMethods = ref("hand-write");
+const importedSignatureURL = ref(null);
 const penColor = ref("black");
 const ongoingTouches = [];
 const position = {
@@ -117,6 +152,13 @@ const canvas = ref(null);
 const canvasWrapper = ref(null); // For auto-adjusting the canvas dimension
 const ctx = ref(null);
 // ======================= HELPERS =======================
+const isCanvasDrawn = (canvas) => {
+  if (!canvas) return false;
+  return canvas
+    .getContext("2d")
+    .getImageData(0, 0, canvas.width, canvas.height)
+    .data.some((channel) => channel !== 0);
+};
 /**
  * Resize the canvas element
  */
@@ -235,22 +277,63 @@ const handleMouseMove = (e) => {
 };
 // Button Handlers
 const handleEraseCanvas = () => {
-  ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
+  if (signatureMethods.value === "hand-write") {
+    ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
+  } else {
+    importedSignatureURL.value = null;
+  }
 };
 const handleCreateSignature = () => {
-  // Turn the signature into the image in the text form
-  const dataURL = canvas.value.toDataURL();
+  if (!isCanvasDrawn(canvas.value) && !importedSignatureURL.value) return;
+  console.log("drawn");
+  let dataURL;
+  if (signatureMethods.value === "hand-write") {
+    // Turn the signature into the image in the text form
+    dataURL = canvas.value.toDataURL();
+  } else {
+    dataURL = importedSignatureURL.value;
+  }
   emit("signature-complete", dataURL);
+};
+// Signature import handler
+const handleSignatureUpload = (e) => {
+  const file = e.target.files[0];
+  const fileType = file.type;
+  const isImageFile = fileType.startsWith("image/");
+  if (!isImageFile) return;
+  const reader = new FileReader();
+  reader.onload = function () {
+    importedSignatureURL.value = this.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = null; // clear up the input field so that user can upload again
 };
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {
-  if (canvas.value) ctx.value = canvas.value.getContext("2d");
-  resizeCanvas();
+  document.addEventListener("resize", resizeCanvas);
 });
+onUnmounted(() => {
+  console.log("unmounted");
+  document.removeEventListener("resize", resizeCanvas);
+});
+watch(
+  // Resize canvas upon toggling
+  canvas,
+  (ref, _) => {
+    if (ref) {
+      ctx.value = ref.getContext("2d");
+      resizeCanvas();
+    }
+  },
+  {
+    immediate: true,
+  }
+);
 </script>
 
 <style lang="scss" scoped>
 $desktop-screen: 64em;
+$mobile-screen: 43em;
 .signature-board-container {
   position: fixed;
   top: 0;
@@ -258,7 +341,7 @@ $desktop-screen: 64em;
   z-index: 1;
   height: 100vh;
   width: 100%;
-  padding-top: calc(10.6rem + 5.3rem);
+  padding-top: calc(14.3rem);
   background-color: #f0f0f0;
 }
 .overlay-header {
@@ -277,7 +360,7 @@ $desktop-screen: 64em;
 }
 .wrapper {
   padding: 0 1.6rem;
-  max-width: calc(58.9rem + 3.2rem);
+  max-width: calc(59rem + 3.2rem);
   margin: 0 auto;
 }
 // Override default quasar button group
@@ -297,27 +380,30 @@ $desktop-screen: 64em;
   border-radius: 14px;
 }
 
-.pen-colors {
+.color-picker {
   display: flex;
   justify-content: center;
   gap: 1.6rem;
-  margin-bottom: 1.6rem;
+  margin-bottom: 2.9rem;
   &__input {
     display: none;
   }
-  &__input:checked ~ &__color--black {
+  &__input:checked ~ &__label--black {
     border: 2px solid #000000;
   }
-  &__input:checked ~ &__color--blue {
+  &__input:checked ~ &__label--blue {
     border: 2px solid #0014c7;
   }
-  &__input:checked ~ &__color--red {
+  &__input:checked ~ &__label--red {
     border: 2px solid #ca0000;
   }
-  &__container {
+  &__color {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
   }
-  &__color {
+  &__label {
     display: inline-block;
     position: relative;
     width: 4.5rem;
@@ -325,7 +411,7 @@ $desktop-screen: 64em;
     overflow: hidden;
     border-radius: 50%;
   }
-  &__color::after {
+  &__label::after {
     content: "";
     position: absolute;
     top: 50%;
@@ -336,22 +422,57 @@ $desktop-screen: 64em;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
   }
-  &__color--black::after {
+  &__label--black::after {
     background-color: #000000;
   }
-  &__color--blue::after {
+  &__label--blue::after {
     background-color: #0014c7;
   }
-  &__color--red::after {
+  &__label--red::after {
     background-color: #ca0000;
   }
 }
 .signature-board {
   width: 100%;
-  margin-bottom: 2.5rem;
+  line-height: 0;
   &__canvas {
     background: #ffffff;
     border-radius: 26px;
+  }
+}
+.signature-group {
+  margin-bottom: 3.9rem;
+}
+.signature-importer {
+  // Layout
+  width: 100%;
+  height: 22.4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 7.4rem;
+  // Positioning
+  position: relative;
+  // Visual
+  background: #ffffff;
+  border-radius: 26px;
+  &__input {
+    opacity: 0; /* make transparent */
+    z-index: -1; /* move under anything else */
+    position: absolute; /* don't let it take up space */
+  }
+  &__input:focus + label {
+    text-decoration: underline;
+  }
+  &__input:hover + label {
+    text-decoration: underline;
+  }
+  &__input-label {
+    font-weight: 400;
+    font-size: 2.2rem;
+    line-height: 32px;
+    color: #b7b7b7;
+    cursor: pointer;
   }
 }
 .signature-controls {
@@ -379,12 +500,17 @@ $desktop-screen: 64em;
     color: #ffffff;
   }
 }
-@media (max-width: $desktop-screen) {
+@media screen and (max-width: $desktop-screen) {
   .overlay-header {
     justify-content: center;
     img {
       display: none;
     }
+  }
+}
+@media screen and (max-width: $mobile-screen) {
+  .signature-importer {
+    height: 20rem;
   }
 }
 </style>
