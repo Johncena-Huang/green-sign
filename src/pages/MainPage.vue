@@ -18,13 +18,15 @@
       />
       <SignatureBoard
         v-else-if="phase === 'sign'"
-        @signature-complete="signatureHandler"
+        @signature-complete="signatureAppendHandler"
       />
       <LoadingUpload v-else-if="phase === 'loading'" />
       <FileEditor
         v-else-if="phase === 'edit'"
         v-bind="viewerState"
         v-on="viewerHandlers"
+        @signature-deleted="signatureDeleteHandler"
+        @new-signature-created="newSignatureCreateHandler"
       />
       <FinalStatus v-else-if="phase === 'final'" />
       <canvas ref="offscreenCanvas"></canvas>
@@ -48,6 +50,7 @@ import SignatureBoard from "src/components/SignatureBoard.vue";
 import FileEditor from "src/components/FileEditor.vue";
 import FinalStatus from "src/components/FinalStatus.vue";
 import { ref, reactive, onMounted } from "vue";
+import { v4 as uuidv4 } from "uuid";
 // ======================= DATA =======================
 // Constant Variable
 const ZOOM_STEP = 0.1;
@@ -59,11 +62,11 @@ const ZOOM_STEP = 0.1;
  * Control the phase of business logic
  * @type {Phase}
  */
-const phase = ref("sign");
+const phase = ref("upload");
 const file = ref(null);
 const viewerState = reactive({
   canvasBackgroundImage: null,
-  signature: null,
+  signatureArray: [],
   pageCount: null,
   currentPage: 1,
   zoomLevel: 1,
@@ -184,11 +187,26 @@ const fileUploadedHandler = async (fileToSave) => {
   await setAsyncTimeout(1);
   phase.value = "sign";
 };
-const signatureHandler = async (signatureURL) => {
+const signatureAppendHandler = async (signatureURL) => {
   phase.value = "loading";
-  viewerState.signature = signatureURL;
+  const newSignatureObj = {
+    id: uuidv4(),
+    dataURL: signatureURL,
+  };
+  // viewerState.signature = signatureURL;
+  viewerState.signatureArray.push(newSignatureObj);
   await renderFileToImage();
   phase.value = "edit";
+};
+const signatureDeleteHandler = (index) => {
+  viewerState.signatureArray.splice(index, 1);
+};
+const newSignatureCreateHandler = (signatureURL) => {
+  const newSignatureObj = {
+    id: uuidv4(),
+    dataURL: signatureURL,
+  };
+  viewerState.signatureArray.push(newSignatureObj);
 };
 const viewerHandlers = {
   prevPageClick: () => {

@@ -39,6 +39,21 @@
           <canvas class="viewer__canvas" ref="canvas"> </canvas>
         </div>
       </div>
+      <div>
+        <SignaturePickerPopup
+          :show="isSignaturePopupOpen"
+          :signatureArray="signatureArray"
+          @popup-closed="isSignaturePopupOpen = false"
+          @signature-deleted="signatureDeleteEmitter"
+          @signature-inserted="handleAppendSignature"
+          @signature-created="signatureCreateEmitter"
+        />
+        <TextInputPopup
+          :show="isTextInputPopupOpen"
+          @popup-closed="isTextInputPopupOpen = false"
+          @text-inserted="handleAppendText"
+        />
+      </div>
     </div>
     <div class="bottom-bar">
       <div class="bottom-bar__inner-wrapper">
@@ -127,18 +142,27 @@ import {
   useAttrs,
   defineEmits,
 } from "vue";
+import SignaturePickerPopup from "./SignaturePickerPopup.vue";
+import TextInputPopup from "./TextInputPopup.vue";
 import { fabric } from "fabric"; // to wrap the HTML canvas element up with
 import { jsPDF } from "jspdf"; // For downloading the merged pdf file
 // ======================= ATTRS =======================
 const attrs = useAttrs();
-const { canvasBackgroundImage, signature, pageCount, currentPage, zoomLevel } =
-  toRefs(attrs);
+const {
+  canvasBackgroundImage,
+  signatureArray,
+  pageCount,
+  currentPage,
+  zoomLevel,
+} = toRefs(attrs);
 // ======================= EMITS =======================
 const emit = defineEmits([
   "prevPageClick",
   "nextPageClick",
   "zoomInClick",
   "zoomOutClick",
+  "signatureDeleted",
+  "newSignatureCreated",
 ]);
 // ======================= GETTER =======================
 const zoomLevelPercentage = computed(() => (zoomLevel.value * 100).toFixed(0)); // Deal with floating point number
@@ -149,7 +173,7 @@ const toolsArray = [
     toolName: "sign",
     svg: "sign",
     text: "簽名",
-    clickHandler: () => handleAppendSignature(),
+    clickHandler: () => toggleSignaturePicker(),
   },
   {
     toolName: "check",
@@ -167,7 +191,7 @@ const toolsArray = [
     toolName: "text",
     svg: "text",
     text: "插入文字",
-    clickHandler: () => handleAppendText(),
+    clickHandler: () => toggleTextInputPopup(),
   },
 ];
 // State
@@ -179,6 +203,8 @@ const toolsArray = [
  * @type {Action}
  */
 const action = ref("完成簽署");
+const isSignaturePopupOpen = ref(false);
+const isTextInputPopupOpen = ref(false);
 // Reference
 const canvas = ref(null);
 let fabricCanvas = null;
@@ -295,13 +321,22 @@ const handleZoomIn = () => {
   if (zoomLevel.value >= 2) return; // Set the upper limit to 2(floating point number)
   emit("zoomInClick");
 };
-const handleAppendSignature = () => {
-  fabric.Image.fromURL(signature.value, (img) => {
+const toggleSignaturePicker = () => {
+  isSignaturePopupOpen.value = !isSignaturePopupOpen.value;
+};
+const toggleTextInputPopup = () => {
+  isTextInputPopupOpen.value = !isTextInputPopupOpen.value;
+};
+const handleAppendSignature = (index) => {
+  console.log("append Signature");
+  const signatureToAppend = signatureArray.value[index].dataURL;
+  fabric.Image.fromURL(signatureToAppend, (img) => {
     img.top = 0;
     img.left = 0;
     img.scaleX = 1;
     img.scaleY = 1;
     fabricCanvas.add(img);
+    isSignaturePopupOpen.value = false;
   });
 };
 const handleAppendCheckMark = () => {
@@ -312,12 +347,21 @@ const handleAppendDate = () => {
   const currentDateStr = getCurrentDate();
   insertTextOnCanvas(currentDateStr);
 };
-const handleAppendText = () => {
-  const textBox = new fabric.Textbox("請輸入文字", {
-    width: 200,
-    fontSize: 24,
-  });
-  fabricCanvas.add(textBox);
+const handleAppendText = (textToAppend) => {
+  if (textToAppend) {
+    const textBox = new fabric.Textbox(textToAppend, {
+      width: 200,
+      fontSize: 24,
+    });
+    fabricCanvas.add(textBox);
+  }
+  toggleTextInputPopup(); // Close popup
+};
+const signatureDeleteEmitter = (index) => {
+  emit("signatureDeleted", index);
+};
+const signatureCreateEmitter = (dataURL) => {
+  emit("newSignatureCreated", dataURL);
 };
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {
@@ -361,6 +405,7 @@ $mobile-screen: 43em;
   }
 }
 .content-wrapper {
+  position: relative;
   height: calc(100% - 8.3rem);
   overflow-y: auto;
   overflow-x: auto;

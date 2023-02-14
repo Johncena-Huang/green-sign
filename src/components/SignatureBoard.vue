@@ -1,7 +1,9 @@
 <template>
   <div class="signature-board-container">
     <div class="overlay-header">
-      <img src="../assets/logo.png" />
+      <a href="/">
+        <img src="../assets/logo.png" />
+      </a>
       <!-- signature-method-toggle -->
       <div class="signature-method-toggle">
         <q-btn-toggle
@@ -97,6 +99,7 @@
               >
             </div>
             <img
+              class="signature-importer__image"
               :src="importedSignatureURL"
               alt="imported-signature"
               v-show="importedSignatureURL"
@@ -163,6 +166,7 @@ const isCanvasDrawn = (canvas) => {
  * Resize the canvas element
  */
 const resizeCanvas = function () {
+  if (!canvas.value) return; // No need to resize when user toggles to image import
   const MOBILE_SCREEN = 688;
   const viewportWidth = window.innerWidth;
   if (viewportWidth <= MOBILE_SCREEN) {
@@ -310,11 +314,10 @@ const handleSignatureUpload = (e) => {
 };
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {
-  document.addEventListener("resize", resizeCanvas);
+  window.addEventListener("resize", resizeCanvas);
 });
 onUnmounted(() => {
-  console.log("unmounted");
-  document.removeEventListener("resize", resizeCanvas);
+  window.removeEventListener("resize", resizeCanvas);
 });
 watch(
   // Resize canvas upon toggling
@@ -334,6 +337,7 @@ watch(
 <style lang="scss" scoped>
 $desktop-screen: 64em;
 $mobile-screen: 43em;
+
 .signature-board-container {
   position: fixed;
   top: 0;
@@ -447,9 +451,9 @@ $mobile-screen: 43em;
   // Layout
   width: 100%;
   height: 22.4rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  // display: flex;
+  // justify-content: center;
+  // align-items: center;
   margin-top: 7.4rem;
   // Positioning
   position: relative;
@@ -470,9 +474,26 @@ $mobile-screen: 43em;
   &__input-label {
     font-weight: 400;
     font-size: 2.2rem;
-    line-height: 32px;
+    line-height: 20rem;
+    // line-height: 32px;
     color: #b7b7b7;
     cursor: pointer;
+  }
+  &__renderer {
+    width: 100%;
+    height: 20rem;
+    background: #ffffff;
+    border-radius: 26px;
+  }
+  &__uploader {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+  }
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 }
 .signature-controls {
@@ -509,8 +530,15 @@ $mobile-screen: 43em;
   }
 }
 @media screen and (max-width: $mobile-screen) {
+  .color-picker {
+    margin-bottom: 1.2rem;
+  }
+  .signature-group {
+    margin-bottom: 2.5rem;
+  }
   .signature-importer {
     height: 20rem;
+    margin-top: calc(7.4rem - 1.7rem); // shrink from 2.9 to 1.2
   }
 }
 </style>
