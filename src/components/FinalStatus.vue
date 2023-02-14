@@ -8,34 +8,53 @@
     <div class="content-wrapper">
       <!-- Message group -->
       <div class="message-group">
-        <div class="message" :class="{ 'message--active': isSuccess }">
-          <img
+        <div class="message" :class="{ 'message--active': props.isSuccess }">
+          <Vue3Lottie
+            :animationData="SuccessJSON"
+            :width="140"
+            :height="140"
+            :loop="1"
+          />
+          <!-- <img
             class="message__picture"
             src="../assets/svg/download-success.svg"
-          />
+          /> -->
           <div class="message__text">下載成功</div>
         </div>
-        <div class="message" :class="{ 'message--active': !isSuccess }">
-          <img
+        <div class="message" :class="{ 'message--active': !props.isSuccess }">
+          <Vue3Lottie
+            :animationData="ErrorJSON"
+            :width="140"
+            :height="140"
+            :loop="1"
+          />
+          <!-- <img
             class="message__picture"
             src="../assets/svg/download-failure.svg"
-          />
+          /> -->
           <div class="message__text">下載失敗，請稍後再試</div>
         </div>
       </div>
       <!-- Home button -->
-      <q-btn
-        class="home-btn"
-        label="回首頁"
-        @click.prevent="window.location.reload()"
-      />
+      <q-btn class="home-btn" label="回首頁" @click.prevent="handleClick" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-const isSuccess = ref(false);
+import { Vue3Lottie } from "vue3-lottie";
+import "vue3-lottie/dist/style.css";
+import SuccessJSON from "../assets/json/success.json";
+import ErrorJSON from "../assets/json/error.json";
+const props = defineProps({
+  isSuccess: {
+    type: Boolean,
+    default: true,
+  },
+});
+const handleClick = () => {
+  window.location.reload();
+};
 </script>
 
 <style lang="scss" scoped>
@@ -71,7 +90,6 @@ $mobile-screen: 43em;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 2.7rem;
   &__text {
     font-weight: 400;
     font-size: 2.2rem;

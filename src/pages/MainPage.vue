@@ -27,6 +27,7 @@
         v-on="viewerHandlers"
         @signature-deleted="signatureDeleteHandler"
         @new-signature-created="newSignatureCreateHandler"
+        @after-download="phase = 'final'"
       />
       <FinalStatus v-else-if="phase === 'final'" />
       <canvas ref="offscreenCanvas"></canvas>
@@ -35,7 +36,7 @@
     <div class="leaf-backdrop"></div>
     <!-- FOOTER -->
     <div class="footer-wrapper">
-      <footer class="footer">小綠簽 © Code: Alex / Design: KT</footer>
+      <footer class="footer">小綠簽 © Code: John / Design: KT</footer>
     </div>
   </div>
 </template>
@@ -62,7 +63,7 @@ const ZOOM_STEP = 0.1;
  * Control the phase of business logic
  * @type {Phase}
  */
-const phase = ref("upload");
+const phase = ref("final");
 const file = ref(null);
 const viewerState = reactive({
   canvasBackgroundImage: null,

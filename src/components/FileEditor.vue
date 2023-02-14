@@ -163,6 +163,7 @@ const emit = defineEmits([
   "zoomOutClick",
   "signatureDeleted",
   "newSignatureCreated",
+  "afterDownload",
 ]);
 // ======================= GETTER =======================
 const zoomLevelPercentage = computed(() => (zoomLevel.value * 100).toFixed(0)); // Deal with floating point number
@@ -296,6 +297,7 @@ const actionHandlers = {
     newPDF.addImage(image, "png", 0, 0, width, height);
     newPDF.save("download.pdf");
     // Redirect the user to another component
+    emit("afterDownload");
   },
 };
 const toggleAction = () => {
