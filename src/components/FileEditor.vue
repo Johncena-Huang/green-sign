@@ -292,13 +292,17 @@ const actionHandlers = {
     fabricCanvas.renderAll();
     action.value = "儲存";
   },
-  儲存: () => {
+  儲存: async () => {
     const newPDF = new jsPDF();
     const image = fabricCanvas.toDataURL("image/png");
     const width = newPDF.internal.pageSize.width;
     const height = newPDF.internal.pageSize.height;
     newPDF.addImage(image, "png", 0, 0, width, height);
-    newPDF.save("download.pdf");
+    await newPDF.save("download.pdf", { returnPromise: true });
+    window.open(
+      newPDF.output("bloburl", { filename: "download.pdf" }),
+      "_blank"
+    );
     // Redirect the user to another component
     emit("afterDownload");
   },

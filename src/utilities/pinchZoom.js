@@ -1,5 +1,4 @@
-import { useQuasar } from "quasar";
-const $q = useQuasar();
+import { Platform } from "quasar";
 const throttle = function (cb, delay) {
   let shouldWait = false;
   let latestArgs = null;
@@ -23,7 +22,7 @@ const throttle = function (cb, delay) {
   };
 };
 export default function (element, zoomInHandler, zoomOutHandler) {
-  if (!$q.platform.is.mobile) return;
+  if (!Platform.is.mobile) return;
   let dist1 = 0;
   const handleTouchMove = (ev) => {
     if (ev.targetTouches.length === 2 && ev.changedTouches.length === 2) {
