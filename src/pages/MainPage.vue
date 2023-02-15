@@ -20,14 +20,14 @@
         v-else-if="phase === 'sign'"
         @signature-complete="signatureAppendHandler"
       />
-      <LoadingUpload v-else-if="phase === 'loading'" />
+      <Spinner v-else-if="phase === 'loading'" :loadingText="loadingText" />
       <FileEditor
         v-else-if="phase === 'edit'"
         v-bind="viewerState"
         v-on="viewerHandlers"
         @signature-deleted="signatureDeleteHandler"
         @new-signature-created="newSignatureCreateHandler"
-        @after-download="phase = 'final'"
+        @after-download="afterDownloadHandler"
       />
       <FinalStatus v-else-if="phase === 'final'" />
       <canvas ref="offscreenCanvas"></canvas>
@@ -46,7 +46,7 @@ import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
 import * as pdfWorker from "pdfjs-dist/build/pdf.worker.entry";
 import { fabric } from "fabric";
 import FileUploader from "src/components/FileUploader.vue";
-import LoadingUpload from "src/components/LoadingUpload.vue";
+import Spinner from "src/components/Spinner.vue";
 import SignatureBoard from "src/components/SignatureBoard.vue";
 import FileEditor from "src/components/FileEditor.vue";
 import FinalStatus from "src/components/FinalStatus.vue";
@@ -72,6 +72,7 @@ const viewerState = reactive({
   currentPage: 1,
   zoomLevel: 1,
 });
+const loadingText = ref(null);
 // Reference
 const offscreenCanvas = ref(null);
 // ======================= HELPERS =======================
@@ -183,13 +184,15 @@ const renderFileToImage = () => {
 // Event Handlers
 const fileUploadedHandler = async (fileToSave) => {
   phase.value = "loading";
+  loadingText.value = "上傳中...";
   file.value = fileToSave;
-  console.log(fileToSave);
   await setAsyncTimeout(1);
   phase.value = "sign";
 };
 const signatureAppendHandler = async (signatureURL) => {
   phase.value = "loading";
+  loadingText.value = "簽名優化中...";
+  await setAsyncTimeout(1);
   const newSignatureObj = {
     id: uuidv4(),
     dataURL: signatureURL,
@@ -198,6 +201,7 @@ const signatureAppendHandler = async (signatureURL) => {
   viewerState.signatureArray.push(newSignatureObj);
   await renderFileToImage();
   phase.value = "edit";
+  loadingText.value = null;
 };
 const signatureDeleteHandler = (index) => {
   viewerState.signatureArray.splice(index, 1);
@@ -208,6 +212,9 @@ const newSignatureCreateHandler = (signatureURL) => {
     dataURL: signatureURL,
   };
   viewerState.signatureArray.push(newSignatureObj);
+};
+const afterDownloadHandler = () => {
+  phase.value = "final";
 };
 const viewerHandlers = {
   prevPageClick: () => {

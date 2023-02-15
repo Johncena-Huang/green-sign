@@ -2,7 +2,7 @@
   <div class="loading">
     <div class="loading__inner">
       <Vue3Lottie :animationData="LoadingJSON" :width="132" />
-      <div class="uploading__text">上傳中...</div>
+      <div class="uploading__text">{{ props.loadingText }}</div>
     </div>
   </div>
 </template>
@@ -11,6 +11,12 @@
 import { Vue3Lottie } from "vue3-lottie";
 import "vue3-lottie/dist/style.css";
 import LoadingJSON from "../assets/json/loading.json";
+const props = defineProps({
+  loadingText: {
+    type: String,
+    default: "",
+  },
+});
 </script>
 
 <style lang="scss" scoped>
