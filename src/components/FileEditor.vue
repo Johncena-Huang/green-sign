@@ -35,7 +35,7 @@
     </div>
     <div class="content-wrapper">
       <div class="viewer">
-        <div class="viewer__inner">
+        <div class="viewer__inner" ref="innerViewer">
           <canvas class="viewer__canvas" ref="canvas"> </canvas>
         </div>
       </div>
@@ -142,6 +142,7 @@ import {
   useAttrs,
   defineEmits,
 } from "vue";
+import registerPinchZoom from "../utilities/pinchZoom.js";
 import SignaturePickerPopup from "./SignaturePickerPopup.vue";
 import TextInputPopup from "./TextInputPopup.vue";
 import { fabric } from "fabric"; // to wrap the HTML canvas element up with
@@ -208,9 +209,11 @@ const isSignaturePopupOpen = ref(false);
 const isTextInputPopupOpen = ref(false);
 // Reference
 const canvas = ref(null);
+const innerViewer = ref(null);
 let fabricCanvas = null;
 // ======================= METHODS =======================
 // Helpers
+
 /**
  * Set the canvas background Image with the provided one
  * @param {fabric.Canvas} fabricCanvasObj - The instance of the fabric.Canvas object to mount the image on
@@ -330,7 +333,6 @@ const toggleTextInputPopup = () => {
   isTextInputPopupOpen.value = !isTextInputPopupOpen.value;
 };
 const handleAppendSignature = (index) => {
-  console.log("append Signature");
   const signatureToAppend = signatureArray.value[index].dataURL;
   fabric.Image.fromURL(signatureToAppend, (img) => {
     img.top = 0;
@@ -370,6 +372,7 @@ onMounted(() => {
   if (canvas.value) fabricCanvas = new fabric.Canvas(canvas.value);
   setCanvasBackgroundImage(fabricCanvas, canvasBackgroundImage.value);
   setAspectRatioOnCanvas(canvasBackgroundImage.value);
+  registerPinchZoom(innerViewer.value, handleZoomIn, handleZoomOut);
 });
 // ======================= WATCHER =======================
 // For handling page update from pagination

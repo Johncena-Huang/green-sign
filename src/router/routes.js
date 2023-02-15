@@ -5,7 +5,7 @@ const routes = [
   },
   {
     path: "/test",
-    component: () => import("src/components/SignatureBoard.vue"),
+    component: () => import("src/components/PinchZoom.vue"),
   },
 
   // Always leave this as last one,

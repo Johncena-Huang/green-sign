@@ -63,7 +63,7 @@ const ZOOM_STEP = 0.1;
  * Control the phase of business logic
  * @type {Phase}
  */
-const phase = ref("final");
+const phase = ref("upload");
 const file = ref(null);
 const viewerState = reactive({
   canvasBackgroundImage: null,

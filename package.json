@@ -17,6 +17,7 @@
     "fabric": "^5.3.0",
     "jspdf": "^2.5.1",
     "pdfjs-dist": "^3.2.146",
+    "pinch-zoom-js": "^2.3.5",
     "pinia": "^2.0.11",
     "quasar": "^2.6.0",
     "uuid": "^9.0.0",
