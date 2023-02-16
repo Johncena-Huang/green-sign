@@ -20,7 +20,7 @@
         v-else-if="phase === 'sign'"
         @signature-complete="signatureAppendHandler"
       />
-      <Spinner v-else-if="phase === 'loading'" :loadingText="loadingText" />
+      <TextSpinner v-else-if="phase === 'loading'" :loadingText="loadingText" />
       <FileEditor
         v-else-if="phase === 'edit'"
         v-bind="viewerState"
@@ -46,7 +46,7 @@ import * as pdfjsLib from "pdfjs-dist/build/pdf.js";
 import * as pdfWorker from "pdfjs-dist/build/pdf.worker.entry";
 import { fabric } from "fabric";
 import FileUploader from "src/components/FileUploader.vue";
-import Spinner from "src/components/Spinner.vue";
+import TextSpinner from "src/components/TextSpinner.vue";
 import SignatureBoard from "src/components/SignatureBoard.vue";
 import FileEditor from "src/components/FileEditor.vue";
 import FinalStatus from "src/components/FinalStatus.vue";

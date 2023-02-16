@@ -7,7 +7,10 @@ const routes = [
     path: "/test",
     component: () => import("src/components/PinchZoom.vue"),
   },
-
+  {
+    path: "/history",
+    component: () => import("src/pages/HistoryPage.vue"),
+  },
   // Always leave this as last one,
   // but you can also remove it
   {
