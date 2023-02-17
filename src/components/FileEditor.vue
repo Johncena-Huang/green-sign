@@ -142,11 +142,19 @@ import {
   useAttrs,
   defineEmits,
 } from "vue";
+import { db } from "src/dexie/dexie";
 import registerPinchZoom from "../utilities/pinchZoom.js";
 import SignaturePickerPopup from "./SignaturePickerPopup.vue";
 import TextInputPopup from "./TextInputPopup.vue";
 import { fabric } from "fabric"; // to wrap the HTML canvas element up with
 import { jsPDF } from "jspdf"; // For downloading the merged pdf file
+// ======================= PROPS =======================
+const props = defineProps({
+  fileName: {
+    type: String,
+    required: true,
+  },
+});
 // ======================= ATTRS =======================
 const attrs = useAttrs();
 const {
@@ -164,7 +172,8 @@ const emit = defineEmits([
   "zoomOutClick",
   "signatureDeleted",
   "newSignatureCreated",
-  "afterDownload",
+  "downloadSucceeded",
+  "downloadFailed",
 ]);
 // ======================= GETTER =======================
 const zoomLevelPercentage = computed(() => (zoomLevel.value * 100).toFixed(0)); // Deal with floating point number
@@ -213,7 +222,18 @@ const innerViewer = ref(null);
 let fabricCanvas = null;
 // ======================= METHODS =======================
 // Helpers
-
+/**
+ * Store the object to indexedDB
+ * @param {string} date
+ * @param {string} fileName
+ */
+const saveToFileHistory = async (date, fileName) => {
+  const newRecord = {
+    date: date,
+    fileName: fileName,
+  };
+  await db.fileRecords.add(newRecord);
+};
 /**
  * Set the canvas background Image with the provided one
  * @param {fabric.Canvas} fabricCanvasObj - The instance of the fabric.Canvas object to mount the image on
@@ -242,12 +262,6 @@ const setAspectRatioOnCanvas = (backgroundImage) => {
   });
 };
 const getViewportWidth = () => {
-  console.log(
-    "clientWidth",
-    document.documentElement.clientWidth,
-    "innerWidth",
-    window.innerWidth
-  );
   return Math.max(
     document.documentElement.clientWidth || 0,
     window.innerWidth || 0
@@ -265,7 +279,6 @@ const getCurrentDate = () => {
     day: "2-digit",
   });
   const formattedDate = localDate.replace(/(\d+)\/(\d+)\/(\d+)/, "$3/$1/$2");
-  getViewportWidth();
   return formattedDate;
 };
 /**
@@ -298,13 +311,18 @@ const actionHandlers = {
     const width = newPDF.internal.pageSize.width;
     const height = newPDF.internal.pageSize.height;
     newPDF.addImage(image, "png", 0, 0, width, height);
-    await newPDF.save("download.pdf", { returnPromise: true });
-    window.open(
-      newPDF.output("bloburl", { filename: "download.pdf" }),
-      "_blank"
-    );
-    // Redirect the user to another component
-    emit("afterDownload");
+    try {
+      await newPDF.save(props.fileName, { returnPromise: true });
+      window.open(
+        newPDF.output("bloburl", { filename: props.fileName }),
+        "_blank"
+      );
+      await saveToFileHistory(getCurrentDate(), props.fileName);
+      // Redirect the user to another component
+      emit("downloadSucceeded");
+    } catch (err) {
+      emit("downloadFailed");
+    }
   },
 };
 const toggleAction = () => {

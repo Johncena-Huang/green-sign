@@ -5,8 +5,15 @@
       <header class="header" v-if="phase !== 'loading'">
         <img src="../assets/logo.png" />
         <div class="btn-group">
-          <button class="history-record--big-screen">歷史紀錄</button>
-          <div class="history-record">歷史記錄</div>
+          <button
+            class="history-record--big-screen"
+            @click.prevent="router.push('/history')"
+          >
+            歷史紀錄
+          </button>
+          <div class="history-record" @click.prevent="router.push('/history')">
+            歷史記錄
+          </div>
         </div>
       </header>
     </div>
@@ -23,13 +30,15 @@
       <TextSpinner v-else-if="phase === 'loading'" :loadingText="loadingText" />
       <FileEditor
         v-else-if="phase === 'edit'"
+        :fileName="fileName"
         v-bind="viewerState"
         v-on="viewerHandlers"
         @signature-deleted="signatureDeleteHandler"
         @new-signature-created="newSignatureCreateHandler"
-        @after-download="afterDownloadHandler"
+        @download-succeeded="handleDownloadSucceeded"
+        @download-failed="handleDownloadFailed"
       />
-      <FinalStatus v-else-if="phase === 'final'" />
+      <FinalStatus v-else-if="phase === 'final'" :errorMessage="errorMessage" />
       <canvas ref="offscreenCanvas"></canvas>
     </div>
     <!-- LEAF DECORATION -->
@@ -50,8 +59,10 @@ import TextSpinner from "src/components/TextSpinner.vue";
 import SignatureBoard from "src/components/SignatureBoard.vue";
 import FileEditor from "src/components/FileEditor.vue";
 import FinalStatus from "src/components/FinalStatus.vue";
+import { useRouter } from "vue-router";
 import { ref, reactive, onMounted } from "vue";
 import { v4 as uuidv4 } from "uuid";
+const router = useRouter();
 // ======================= DATA =======================
 // Constant Variable
 const ZOOM_STEP = 0.1;
@@ -72,6 +83,8 @@ const viewerState = reactive({
   currentPage: 1,
   zoomLevel: 1,
 });
+let fileName = null;
+const errorMessage = "";
 const loadingText = ref(null);
 // Reference
 const offscreenCanvas = ref(null);
@@ -154,6 +167,7 @@ const renderFileToImage = () => {
   return new Promise((resolve) => {
     const fileType = file.value.type;
     const isPdfFile = fileType === "application/pdf";
+    fileName = file.value.name.split(".")[0];
     const reader = new FileReader();
     reader.onload = async function () {
       if (isPdfFile) {
@@ -213,7 +227,11 @@ const newSignatureCreateHandler = (signatureURL) => {
   };
   viewerState.signatureArray.push(newSignatureObj);
 };
-const afterDownloadHandler = () => {
+const handleDownloadSucceeded = () => {
+  phase.value = "final";
+};
+const handleDownloadFailed = (err) => {
+  message = err;
   phase.value = "final";
 };
 const viewerHandlers = {

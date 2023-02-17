@@ -8,31 +8,28 @@
     <div class="content-wrapper">
       <!-- Message group -->
       <div class="message-group">
-        <div class="message" :class="{ 'message--active': props.isSuccess }">
+        <div
+          class="message"
+          :class="{ 'message--active': !props.errorMessage }"
+        >
           <Vue3Lottie
             :animationData="SuccessJSON"
             :width="140"
             :height="140"
             :loop="1"
           />
-          <!-- <img
-            class="message__picture"
-            src="../assets/svg/download-success.svg"
-          /> -->
           <div class="message__text">下載成功</div>
         </div>
-        <div class="message" :class="{ 'message--active': !props.isSuccess }">
+        <div class="message" :class="{ 'message--active': props.errorMessage }">
           <Vue3Lottie
             :animationData="ErrorJSON"
             :width="140"
             :height="140"
             :loop="1"
           />
-          <!-- <img
-            class="message__picture"
-            src="../assets/svg/download-failure.svg"
-          /> -->
-          <div class="message__text">下載失敗，請稍後再試</div>
+          <div class="message__text">
+            下載失敗，請稍後再試<br />{{ props.errorMessage }}
+          </div>
         </div>
       </div>
       <!-- Home button -->
@@ -47,9 +44,9 @@ import "vue3-lottie/dist/style.css";
 import SuccessJSON from "../assets/json/success.json";
 import ErrorJSON from "../assets/json/error.json";
 const props = defineProps({
-  isSuccess: {
-    type: Boolean,
-    default: true,
+  errorMessage: {
+    type: String,
+    required: true,
   },
 });
 const handleClick = () => {
