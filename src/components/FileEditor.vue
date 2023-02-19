@@ -146,6 +146,7 @@ import {
   computed,
   useAttrs,
   defineEmits,
+  isReactive,
 } from "vue";
 import useLeaveConfirmation from "src/composables/leaveConfirmation";
 import { db } from "src/dexie/dexie";

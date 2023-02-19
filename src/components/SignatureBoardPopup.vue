@@ -87,8 +87,8 @@
                   @mousedown.prevent="handleMouseDown"
                   @mousemove.prevent="handleMouseMove"
                   @mouseenter.prevent="handleMouseEnter"
-                  @touchstart.prevent="handleTouchStart"
-                  @touchmove.prevent="handleTouchMove"
+                  @touchstart.prevent.passive="handleTouchStart"
+                  @touchmove.prevent.passive="handleTouchMove"
                   @touchend.prevent="handleStopTouching"
                   @touchcancel.prevent="handleStopTouching"
                 ></canvas>
@@ -159,7 +159,6 @@ import {
   ref,
   watch,
   nextTick,
-  onMounted,
   onUnmounted,
   defineProps,
   defineEmits,
