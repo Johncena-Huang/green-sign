@@ -66,7 +66,7 @@ import SignatureBoard from "src/components/SignatureBoard.vue";
 import FileEditor from "src/components/FileEditor.vue";
 import FinalStatus from "src/components/FinalStatus.vue";
 import { useRouter } from "vue-router";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
 import { v4 as uuidv4 } from "uuid";
 const router = useRouter();
 // ======================= DATA =======================
@@ -81,14 +81,6 @@ const ZOOM_STEP = 0.1;
  * @type {Phase}
  */
 const phase = ref("upload");
-const file = ref(null);
-const INITIAL_VIEWER_STATE = {
-  canvasBackgroundImage: null,
-  signatureArray: [],
-  pageCount: null,
-  currentPage: 1,
-  zoomLevel: 1,
-};
 const viewerState = reactive({
   canvasBackgroundImage: null,
   signatureArray: [],
@@ -96,9 +88,10 @@ const viewerState = reactive({
   currentPage: 1,
   zoomLevel: 1,
 });
-let fileName = null;
 const errorMessage = "";
 const loadingText = ref(null);
+const file = ref(null);
+let fileName = null;
 // Reference
 const offscreenCanvas = ref(null);
 // ======================= HELPERS =======================
@@ -112,7 +105,8 @@ const setAsyncTimeout = (delay) =>
 /**
  * Render the PDF file on the canvas element
  * @param {ArrayBuffer} fileAsArrayBuffer - The PDF file as an array buffer
- * @param {number} [currentPage = 1] - The page number to be rendered.
+ * @param {number} [currentPage = 1] - The page number to be rendered
+ * @param {number} [zoomLevel = 1] - The zoom level to be rendered at
  */
 const renderPdfAndSavePageCount = async (
   fileAsArrayBuffer,
@@ -153,12 +147,15 @@ const loadDataToImage = (dataUrl) => {
  * Draw the image on the canvas element
  * @param {HTMLCanvasElement} canvasReference - The canvas element to draw on
  * @param {HTMLImageElement} image - The image to be drawn
+ * @param {number} [zoomLevel = 1] - The zoom level to render the image at
  */
-const drawImageOnCanvas = (canvasReference, image) => {
-  canvasReference.height = image.height;
-  canvasReference.width = image.width;
+const drawImageOnCanvas = (canvasReference, image, zoomLevel = 1) => {
+  const imageHeight = image.height * zoomLevel;
+  const imageWidth = image.width * zoomLevel;
+  canvasReference.height = imageHeight;
+  canvasReference.width = imageWidth;
   const context = canvasReference.getContext("2d");
-  context.drawImage(image, 0, 0);
+  context.drawImage(image, 0, 0, imageHeight, imageWidth);
 };
 /**
  * Convert the content rendered on canvas into image
@@ -194,8 +191,9 @@ const renderFileToImage = () => {
         resolve();
       } else {
         const image = await loadDataToImage(this.result);
-        drawImageOnCanvas(offscreenCanvas.value, image);
-        const canvasImage = await convertToImage(offscreenCanvas.value, 1);
+        viewerState.pageCount = 1;
+        drawImageOnCanvas(offscreenCanvas.value, image, viewerState.zoomLevel);
+        const canvasImage = await convertToImage(offscreenCanvas.value);
         viewerState.canvasBackgroundImage = canvasImage;
         resolve();
       }
@@ -258,7 +256,6 @@ const viewerHandlers = {
   },
   zoomInClick: () => {
     viewerState.zoomLevel += ZOOM_STEP;
-
     renderFileToImage();
   },
   zoomOutClick: () => {
@@ -270,11 +267,18 @@ const handleResetState = () => {
   phase.value = "upload";
   file.value = null;
   fileName = null;
-  Object.assign(viewerState, INITIAL_VIEWER_STATE);
+  viewerState.canvasBackgroundImage = null;
+  viewerState.signatureArray = [];
+  viewerState.pageCount = null;
+  viewerState.currentPage = 1;
+  viewerState.zoomLevel = 1;
 };
 // ======================= LIFE CYCLES =======================
 onMounted(() => {
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+});
+onUnmounted(() => {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = null;
 });
 </script>
 

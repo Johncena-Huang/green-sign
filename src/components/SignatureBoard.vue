@@ -291,7 +291,6 @@ const handleEraseCanvas = () => {
 };
 const handleCreateSignature = () => {
   if (!isCanvasDrawn(canvas.value) && !importedSignatureURL.value) return;
-  console.log("drawn");
   let dataURL;
   if (signatureMethods.value === "hand-write") {
     // Turn the signature into the image in the text form

@@ -97,14 +97,12 @@ const toggleSignatureBoardPopup = () => {
   isSignatureBoardOpen.value = !isSignatureBoardOpen.value;
 };
 const handlePopupClose = (e) => {
-  console.log("signaturepicker handlepopclose");
   const insidePopup = e.target.closest(".signature-picker-popup");
   const outsidePopupDialog = !e.target.closest(
     ".signature-picker-popup__dialog"
   );
   const shouldClosePopup = insidePopup && outsidePopupDialog;
   if (!shouldClosePopup) return;
-  console.log("emit closed");
   emit("popup-closed");
 };
 const signatureCreateEmitter = (dataURL) => {
