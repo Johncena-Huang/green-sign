@@ -350,7 +350,7 @@ const handlePopupClose = (e) => {
 };
 const handleCreateSignature = () => {
   if (!isCanvasDrawn(canvas.value) && !importedSignatureURL.value)
-    return notify.showMessage("請輸入/匯入您的簽名", 1);
+    return notify.showMessage("請置入簽名後再完成簽署");
   let dataURL;
   if (signatureMethods.value === "hand-write") {
     // Turn the signature into the image in the text form

@@ -137,17 +137,21 @@ import {
   ref,
   toRefs,
   onMounted,
+  onUnmounted,
   watch,
   computed,
   useAttrs,
   defineEmits,
 } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
+import useLeaveConfirmation from "src/composables/leaveConfirmation";
 import { db } from "src/dexie/dexie";
 import registerPinchZoom from "../utilities/pinchZoom.js";
 import SignaturePickerPopup from "./SignaturePickerPopup.vue";
 import TextInputPopup from "./TextInputPopup.vue";
 import { fabric } from "fabric"; // to wrap the HTML canvas element up with
 import { jsPDF } from "jspdf"; // For downloading the merged pdf file
+const leaveConfirmationNotify = useLeaveConfirmation();
 // ======================= PROPS =======================
 const props = defineProps({
   fileName: {
@@ -389,18 +393,36 @@ const signatureDeleteEmitter = (index) => {
 const signatureCreateEmitter = (dataURL) => {
   emit("newSignatureCreated", dataURL);
 };
+const handleBeforeUnload = (event) => {
+  event.preventDefault();
+  return (event.returnValue = "");
+};
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {
   if (canvas.value) fabricCanvas = new fabric.Canvas(canvas.value);
   setCanvasBackgroundImage(fabricCanvas, canvasBackgroundImage.value);
   setAspectRatioOnCanvas(canvasBackgroundImage.value);
   registerPinchZoom(innerViewer.value, handleZoomIn, handleZoomOut);
+  window.addEventListener("beforeunload", handleBeforeUnload);
+});
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", handleBeforeUnload);
 });
 // ======================= WATCHER =======================
 // For handling page update from pagination
 watch(canvasBackgroundImage, (newBackground, _) => {
   setCanvasBackgroundImage(fabricCanvas, newBackground);
   setAspectRatioOnCanvas(canvasBackgroundImage.value);
+});
+// ======================= Navigation GUARD =======================
+onBeforeRouteLeave(async () => {
+  leaveConfirmationNotify.showMessage("尚未儲存文件，確定要離開且刪除？");
+  try {
+    await leaveConfirmationNotify.waitForResponse();
+    return true;
+  } catch (err) {
+    return false;
+  }
 });
 </script>
 

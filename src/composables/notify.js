@@ -1,18 +1,17 @@
-import { reactive } from "vue";
+import { reactive, toRefs } from "vue";
 const popupState = reactive({
   show: false,
   message: null,
-  buttonType: 1,
 });
+const { show, message } = toRefs(popupState);
 export default function useNotify() {
-  const showMessage = (msg, btnType = 1) => {
+  const showMessage = (msg) => {
     popupState.show = true;
     popupState.message = msg;
-    popupState.buttonType = btnType;
   };
   const closePopup = () => {
     popupState.show = false;
     popupState.message = null;
   };
-  return { popupState, showMessage, closePopup };
+  return { show, message, showMessage, closePopup };
 }
