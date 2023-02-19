@@ -26,6 +26,7 @@
       <SignatureBoard
         v-else-if="phase === 'sign'"
         @signature-complete="signatureAppendHandler"
+        @reset-state="handleResetState"
       />
       <TextSpinner v-else-if="phase === 'loading'" :loadingText="loadingText" />
       <FileEditor
@@ -37,8 +38,13 @@
         @new-signature-created="newSignatureCreateHandler"
         @download-succeeded="handleDownloadSucceeded"
         @download-failed="handleDownloadFailed"
+        @reset-state="handleResetState"
       />
-      <FinalStatus v-else-if="phase === 'final'" :errorMessage="errorMessage" />
+      <FinalStatus
+        v-else-if="phase === 'final'"
+        :errorMessage="errorMessage"
+        @reset-state="handleResetState"
+      />
       <canvas ref="offscreenCanvas"></canvas>
     </div>
     <!-- LEAF DECORATION -->
@@ -76,6 +82,13 @@ const ZOOM_STEP = 0.1;
  */
 const phase = ref("upload");
 const file = ref(null);
+const INITIAL_VIEWER_STATE = {
+  canvasBackgroundImage: null,
+  signatureArray: [],
+  pageCount: null,
+  currentPage: 1,
+  zoomLevel: 1,
+};
 const viewerState = reactive({
   canvasBackgroundImage: null,
   signatureArray: [],
@@ -252,6 +265,12 @@ const viewerHandlers = {
     viewerState.zoomLevel -= ZOOM_STEP;
     renderFileToImage();
   },
+};
+const handleResetState = () => {
+  phase.value = "upload";
+  file.value = null;
+  fileName = null;
+  Object.assign(viewerState, INITIAL_VIEWER_STATE);
 };
 // ======================= LIFE CYCLES =======================
 onMounted(() => {

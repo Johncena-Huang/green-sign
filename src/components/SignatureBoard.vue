@@ -2,7 +2,7 @@
   <div class="signature-board-container">
     <div class="overlay-header">
       <a href="/">
-        <img src="../assets/logo.png" />
+        <img src="../assets/logo.png" @click.prevent="handleGoHome" />
       </a>
       <!-- signature-method-toggle -->
       <div class="signature-method-toggle">
@@ -19,7 +19,9 @@
           ]"
         />
       </div>
-      <div class="invisible"><img src="../assets/logo.png" /></div>
+      <div class="invisible">
+        <img src="../assets/logo.png" @click.prevent="handleGoHome" />
+      </div>
     </div>
     <div class="wrapper">
       <div class="signature-group">
@@ -131,7 +133,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, defineEmits, watch } from "vue";
 // ======================= EMITS =======================
-const emit = defineEmits(["signature-complete"]);
+const emit = defineEmits(["signature-complete", "resetState"]);
 // ======================= DATA =======================
 // State
 /**
@@ -311,6 +313,9 @@ const handleSignatureUpload = (e) => {
   };
   reader.readAsDataURL(file);
   e.target.value = null; // clear up the input field so that user can upload again
+};
+const handleGoHome = () => {
+  emit("resetState");
 };
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {

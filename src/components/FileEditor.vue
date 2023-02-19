@@ -1,7 +1,11 @@
 <template>
   <div class="file-editor-container fullscreen">
     <div class="overlay-header">
-      <img class="overlay-header__logo" src="../assets/logo.png" />
+      <img
+        class="overlay-header__logo"
+        src="../assets/logo.png"
+        @click.prevent="handleGoHome"
+      />
       <div class="overlay-header__inner-wrapper">
         <!-- Pagination Control -->
         <div class="pagination-control">
@@ -143,7 +147,6 @@ import {
   useAttrs,
   defineEmits,
 } from "vue";
-import { onBeforeRouteLeave } from "vue-router";
 import useLeaveConfirmation from "src/composables/leaveConfirmation";
 import { db } from "src/dexie/dexie";
 import registerPinchZoom from "../utilities/pinchZoom.js";
@@ -178,6 +181,7 @@ const emit = defineEmits([
   "newSignatureCreated",
   "downloadSucceeded",
   "downloadFailed",
+  "resetState",
 ]);
 // ======================= GETTER =======================
 const zoomLevelPercentage = computed(() => (zoomLevel.value * 100).toFixed(0)); // Deal with floating point number
@@ -397,6 +401,15 @@ const handleBeforeUnload = (event) => {
   event.preventDefault();
   return (event.returnValue = "");
 };
+const handleGoHome = async () => {
+  leaveConfirmationNotify.showMessage("尚未儲存文件，確定要離開且刪除？");
+  try {
+    await leaveConfirmationNotify.waitForResponse();
+    return emit("resetState");
+  } catch (err) {
+    return;
+  }
+};
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {
   if (canvas.value) fabricCanvas = new fabric.Canvas(canvas.value);
@@ -414,16 +427,6 @@ watch(canvasBackgroundImage, (newBackground, _) => {
   setCanvasBackgroundImage(fabricCanvas, newBackground);
   setAspectRatioOnCanvas(canvasBackgroundImage.value);
 });
-// ======================= Navigation GUARD =======================
-onBeforeRouteLeave(async () => {
-  leaveConfirmationNotify.showMessage("尚未儲存文件，確定要離開且刪除？");
-  try {
-    await leaveConfirmationNotify.waitForResponse();
-    return true;
-  } catch (err) {
-    return false;
-  }
-});
 </script>
 
 <style lang="scss" scoped>
@@ -432,22 +435,18 @@ $desktop-screen: 64em;
 // 688px
 $mobile-screen: 43em;
 .file-editor-container {
-  // position: fixed;
-  // top: 0;
-  // left: 0;
-  // z-index: 1;
-  // height: 100vh;
-  // width: 100%;
   background-color: #f0f0f0;
 }
 .overlay-header {
   display: inline-block;
   width: fit-content;
   position: absolute;
+  z-index: 1;
   top: 2.8rem;
   left: 4rem;
   &__logo {
     display: block;
+    cursor: pointer;
   }
   &__inner-wrapper {
     display: none;
@@ -464,8 +463,6 @@ $mobile-screen: 43em;
   &__inner {
     margin: 2rem auto;
     padding: 0 14rem;
-    // display: flex;
-    // justify-content: center;
     // To keep the canvas from overflowing
     width: fit-content;
   }
@@ -630,10 +627,6 @@ $mobile-screen: 43em;
     left: $BOTTOM_BAR_MARGIN_X;
     right: $BOTTOM_BAR_MARGIN_X;
     width: auto;
-    // position: relative;
-    // bottom: 0;
-    // left: 0;
-    // margin: 2.4rem 1.6rem;
     &__inner-wrapper {
       justify-content: center;
     }

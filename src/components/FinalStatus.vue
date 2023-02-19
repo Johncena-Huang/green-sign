@@ -33,24 +33,26 @@
         </div>
       </div>
       <!-- Home button -->
-      <q-btn class="home-btn" label="回首頁" @click.prevent="handleClick" />
+      <q-btn class="home-btn" label="回首頁" @click.prevent="handleGoHome" />
     </div>
   </div>
 </template>
 
 <script setup>
+import { defineEmits } from "vue";
 import { Vue3Lottie } from "vue3-lottie";
 import "vue3-lottie/dist/style.css";
 import SuccessJSON from "../assets/json/success.json";
 import ErrorJSON from "../assets/json/error.json";
+const emit = defineEmits(["resetState"]);
 const props = defineProps({
   errorMessage: {
     type: String,
     required: true,
   },
 });
-const handleClick = () => {
-  window.location.reload();
+const handleGoHome = () => {
+  emit("resetState");
 };
 </script>
 

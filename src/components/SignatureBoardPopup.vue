@@ -345,7 +345,6 @@ const handlePopupClose = (e) => {
   );
   const shouldClosePopup = insidePopup && outsidePopupDialog;
   if (!shouldClosePopup) return;
-  console.log("emit popoup close");
   emit("popup-closed");
 };
 const handleCreateSignature = () => {
@@ -367,10 +366,6 @@ const onEsc = () => {
   emit("popup-closed");
 };
 // ======================= LIFE CYCLES =======================
-// onMounted(() => {
-//   console.log("signatureboardpopup mounted");
-//   window.addEventListener("click", handlePopupClose);
-// });
 onUnmounted(() => {
   window.removeEventListener("click", handlePopupClose);
 });
