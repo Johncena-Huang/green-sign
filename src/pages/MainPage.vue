@@ -1,5 +1,5 @@
 <template>
-  <div class="backdrop">
+  <div class="main">
     <!-- HEADER -->
     <div class="header-wrapper">
       <header class="header" v-if="phase !== 'loading'">
@@ -51,7 +51,7 @@
     <div class="leaf-backdrop"></div>
     <!-- FOOTER -->
     <div class="footer-wrapper">
-      <footer class="footer">小綠簽 © Code: John / Design: KT</footer>
+      <footer class="footer">小綠簽 © Code: John Huang / Design: KT</footer>
     </div>
   </div>
 </template>
@@ -287,7 +287,7 @@ onUnmounted(() => {
 $desktop-screen: 64em;
 // 688px
 $mobile-screen: 43em;
-.backdrop {
+.main {
   // Avoid Margin collapse due to margin-top from header-wrapper
   overflow: hidden;
   // Proper way to set height and width to 100vh and vw across device width
@@ -348,7 +348,7 @@ $mobile-screen: 43em;
   }
 }
 @media (max-width: $desktop-screen) {
-  .backdrop {
+  .main {
     background-color: rgba(240, 240, 240, 0.58);
   }
   .header-wrapper {

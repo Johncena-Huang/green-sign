@@ -146,13 +146,12 @@ import {
   computed,
   useAttrs,
   defineEmits,
-  isReactive,
 } from "vue";
 import useLeaveConfirmation from "src/composables/leaveConfirmation";
 import { db } from "src/dexie/dexie";
 import registerPinchZoom from "../utilities/pinchZoom.js";
-import SignaturePickerPopup from "./SignaturePickerPopup.vue";
-import TextInputPopup from "./TextInputPopup.vue";
+import SignaturePickerPopup from "./popup/SignaturePickerPopup.vue";
+import TextInputPopup from "./popup/TextInputPopup.vue";
 import { fabric } from "fabric"; // to wrap the HTML canvas element up with
 import { jsPDF } from "jspdf"; // For downloading the merged pdf file
 const leaveConfirmationNotify = useLeaveConfirmation();

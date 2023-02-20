@@ -163,7 +163,7 @@ import {
   defineProps,
   defineEmits,
 } from "vue";
-import useNotify from "../composables/notify";
+import useNotify from "../../composables/notify";
 // ======================= COMPOSABLE =======================
 const notify = useNotify();
 // ======================= PROPS =======================

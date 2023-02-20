@@ -4,10 +4,6 @@ const routes = [
     component: () => import("src/pages/MainPage.vue"),
   },
   {
-    path: "/test",
-    component: () => import("src/components/PinchZoom.vue"),
-  },
-  {
     path: "/history",
     component: () => import("src/pages/HistoryPage.vue"),
   },

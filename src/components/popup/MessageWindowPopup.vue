@@ -1,24 +1,18 @@
 <template>
   <Teleport to="body">
     <Transition name="scale" :duration="500" appear>
-      <div class="leave-confirmation-popup" v-if="show">
-        <div class="leave-confirmation-popup__dialog inner">
-          <div class="leave-confirmation-popup__inner">
-            <div class="leave-confirmation-popup__message">
+      <div class="message-window-popup" v-if="show">
+        <div class="message-window-popup__dialog inner">
+          <div class="message-window-popup__inner">
+            <div class="message-window-popup__message">
               {{ message }}
             </div>
-            <div class="leave-confirmation-popup__btn-group">
+            <div class="message-window-popup__btn-group">
               <q-btn
-                class="leave-confirmation-popup__btn leave-confirmation-popup__btn--cancel"
-                label="取消"
-                dense
-                @click.prevent="cancel"
-              />
-              <q-btn
-                class="leave-confirmation-popup__btn leave-confirmation-popup__btn--confirm"
+                class="message-window-popup__btn message-window-popup__btn--confirm"
                 label="確定"
                 dense
-                @click.prevent="confirm"
+                @click.prevent="closePopup"
               />
             </div>
           </div>
@@ -29,12 +23,12 @@
 </template>
 
 <script setup>
-import useLeaveConfirmation from "../composables/leaveConfirmation";
-const { show, message, confirm, cancel } = useLeaveConfirmation();
+import useNotify from "../../composables/notify";
+const { show, message, closePopup } = useNotify();
 </script>
 
 <style lang="scss" scoped>
-.leave-confirmation-popup {
+.message-window-popup {
   // Positioning
   position: fixed;
   top: 0;
@@ -60,6 +54,11 @@ const { show, message, confirm, cancel } = useLeaveConfirmation();
   &__inner {
     width: 100%;
   }
+  &__inner--button-two-btns {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
   &__message {
     font-weight: 400;
     font-size: 1.8rem;
@@ -67,11 +66,6 @@ const { show, message, confirm, cancel } = useLeaveConfirmation();
     color: #424242;
     text-align: center;
     margin-bottom: 2.8rem;
-  }
-  &__btn-group {
-    display: flex;
-    gap: 1.2rem;
-    align-items: center;
   }
   &__btn {
     font-weight: 400;

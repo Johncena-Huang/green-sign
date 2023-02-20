@@ -74,31 +74,16 @@
         alt="woman-3"
       />
     </div>
-    <!-- Error message popup -->
-    <PopupWindow
-      message="size"
-      :isOpen="isSizeMsgPopupOpen"
-      @close-popup="isSizeMsgPopupOpen = !isSizeMsgPopupOpen"
-      key="size-message"
-    />
-    <PopupWindow
-      message="type"
-      :isOpen="isTypeMsgPopupOpen"
-      @close-popup="isTypeMsgPopupOpen = !isTypeMsgPopupOpen"
-      key="type-message"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, defineEmits } from "vue";
-import PopupWindow from "./PopupWindow.vue";
+import useNotify from "src/composables/notify";
+const notify = useNotify();
 // ======================= DATA =======================
 // State
 const uploaderRef = ref(null);
-// Modal controllers
-const isSizeMsgPopupOpen = ref(false);
-const isTypeMsgPopupOpen = ref(false);
 // ======================= EMITS =======================
 const emit = defineEmits(["file-uploaded"]);
 // ======================= METHODS =======================
@@ -111,64 +96,21 @@ const handleFileUpload = (e) => {
   const isImageFile = fileType.startsWith("image/");
   //   Guard clause for file types(only "pdf" and "image")
   if (!isPdfFile && !isImageFile) {
-    isTypeMsgPopupOpen.value = true;
+    notify.showMessage("檔案格式錯誤，請重新選擇");
     return;
   }
   //   Guard clause for file size
   if (fileSize > MAX_SIZE) {
-    isSizeMsgPopupOpen.value = true;
+    notify.showMessage("檔案超過10MB，請重新選擇");
     return;
   }
   emit("file-uploaded", file);
-  return;
-  if (isPdfFile) {
-    const reader = new FileReader();
-    reader.onload = async function () {
-      /* We are merging two canvas elements together
-         by turning one into image and setting it as the
-         background of the other canvas element.
-       */
-      canvasRef.value.requestRenderAll();
-      // 1. Render the pdf content on the canvas 2
-      await renderPDF(this.result, 1);
-      // 2. Convert the canvas 2 with pdf content into image
-      const pdfImage = await canvasToImage(canvasBackground.value);
-      canvasRef.value.setWidth(pdfImage.width);
-      canvasRef.value.setHeight(pdfImage.height);
-      // 3. Set the image as the background of canvas 1
-      canvasRef.value.setBackgroundImage(
-        pdfImage,
-        canvasRef.value.renderAll.bind(canvasRef.value)
-      );
-      emit("upload-end");
-    };
-    reader.readAsArrayBuffer(file);
-  } else {
-    const reader = new FileReader();
-    reader.onload = async function () {
-      canvasRef.value.requestRenderAll();
-      // pass in the data URL to image and load it up
-      const image = await loadImage(this.result);
-      drawImageOnCanvas(image);
-      const pdfImage = await canvasToImage(canvasBackground.value);
-      canvasRef.value.setWidth(pdfImage.width);
-      canvasRef.value.setHeight(pdfImage.height);
-      canvasRef.value.setBackgroundImage(
-        pdfImage,
-        canvasRef.value.renderAll.bind(canvasRef.value)
-      );
-    };
-    reader.readAsDataURL(file);
-    emit("upload-end");
-  }
 };
 </script>
 
 <style lang="scss" scoped>
 // 1024px
 $desktop-screen: 64em;
-// 768px
-$tablet-screen: 48em;
 // 688px
 $mobile-screen: 43em;
 .container {
@@ -390,39 +332,4 @@ $mobile-screen: 43em;
     }
   }
 }
-// @media (max-width: $tablet-screen) {
-//   .people-card {
-//     width: 69.6rem;
-//     bottom: 0;
-//     &__grass {
-//       width: auto;
-//       height: auto;
-//     }
-//     &__woman-1 {
-//       width: auto;
-//       height: auto;
-//       left: 0;
-//     }
-//     &__woman-2 {
-//       width: auto;
-//       height: auto;
-//       left: (23.9 / 69.6 * 100%);
-//     }
-//     &__pot-1 {
-//       width: auto;
-//       height: auto;
-//       right: (15.5/ 69.6 * 100%);
-//     }
-//     &__pot-2 {
-//       width: auto;
-//       height: auto;
-//       right: (17.3/ 69.6 * 100%);
-//     }
-//     &__woman-3 {
-//       width: auto;
-//       height: auto;
-//       right: (2.9 / 69.6 * 100%);
-//     }
-//   }
-// }
 </style>

@@ -6,8 +6,8 @@
 
 <script>
 import { defineComponent } from "vue";
-import MessageWindowPopup from "./components/MessageWindowPopup.vue";
-import LeaveConfirmationPopup from "./components/LeaveConfirmationPopup.vue";
+import MessageWindowPopup from "./components/popup/MessageWindowPopup.vue";
+import LeaveConfirmationPopup from "./components/popup/LeaveConfirmationPopup.vue";
 export default defineComponent({
   setup() {},
   name: "App",

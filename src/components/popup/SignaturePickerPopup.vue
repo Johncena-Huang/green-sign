@@ -24,7 +24,7 @@
               />
               <img
                 class="signature-picker-popup__delete-icon"
-                src="../assets/svg/trash-bin.svg"
+                src="../../assets/svg/trash-bin.svg"
                 :alt="`delete-icon-${id}`"
                 @click.prevent="handleSignatureDelete(index)"
               />
@@ -57,7 +57,6 @@ import SignatureBoardPopup from "./SignatureBoardPopup.vue";
 import {
   ref,
   defineEmits,
-  onMounted,
   onUnmounted,
   watch,
   defineProps,
