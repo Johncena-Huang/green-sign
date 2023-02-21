@@ -41,5 +41,5 @@ quasar build
 
 ## Acknowledgements
 
-- [The F2E](https://awesomeopensource.com/project/elangosundar/awesome-README-templates): An annual event held by [HexSchool](https://www.hexschool.com/) in Taiwan which brings together UI/UX designers and web developers to collaborate on creating interesting, high-quality web applications.
+- [The F2E](https://2022.thef2e.com/): An annual event held by [HexSchool](https://www.hexschool.com/) in Taiwan which brings together UI/UX designers and web developers to collaborate on creating interesting, high-quality web applications.
 - [Doris KT](https://www.figma.com/file/6ZjDFQSrwRy6OUAXDmJNhz/%E5%B0%8F%E7%B6%A0%E7%B0%BD?node-id=0%3A1&t=lVWygfSndZULzFO9-0): The UI/UX designer for the application.
