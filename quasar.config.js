@@ -47,7 +47,7 @@ module.exports = configure(function (ctx) {
       vueRouterMode: "history", // available values: 'hash', 'history'
 
       // transpile: false,
-      // publicPath: '/',
+      publicPath: "green-sign",
 
       // Add dependencies for transpiling with Babel (Array of string/regex)
       // (from node_modules, which are by default not transpiled).
@@ -148,13 +148,13 @@ module.exports = configure(function (ctx) {
       },
 
       manifest: {
-        name: `dotted-sign`,
-        short_name: `dotted-sign`,
-        description: `A Quasar Project`,
+        name: `Green Sign`,
+        short_name: `Green Sign`,
+        description: `An e-signature app that allows users to create a personalized, handwritten signature and merge it with a PDF document.`,
         display: "standalone",
         orientation: "portrait",
-        background_color: "#ffffff",
-        theme_color: "#027be3",
+        background_color: "#1C8B6A", //ffffff
+        theme_color: "#1C8B6A",
         icons: [
           {
             src: "icons/icon-128x128.png",
@@ -213,7 +213,7 @@ module.exports = configure(function (ctx) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: "dotted-sign",
+        appId: "gree-sign",
       },
 
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
