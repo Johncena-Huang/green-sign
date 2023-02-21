@@ -147,6 +147,7 @@ import {
   useAttrs,
   defineEmits,
 } from "vue";
+import { useQuasar } from "quasar";
 import useLeaveConfirmation from "src/composables/leaveConfirmation";
 import { db } from "src/dexie/dexie";
 import registerPinchZoom from "../utilities/pinchZoom.js";
@@ -243,6 +244,63 @@ const saveToFileHistory = async (date, fileName) => {
   await db.fileRecords.add(newRecord);
 };
 /**
+ * Customize the default delete button on all the newly appended element controls.
+ * @param {fabric} fabric - The fabric.js library
+ */
+const addDefaultDeleteBtnToCanvasElement = (fabric) => {
+  function deleteObject(eventData, transform) {
+    const target = transform.target;
+    const canvas = target.canvas;
+    canvas.remove(target);
+    canvas.requestRenderAll();
+  }
+  function renderIcon(ctx, left, top, styleOverride, fabricObject) {
+    const size = this.cornerSize;
+    ctx.save();
+    ctx.translate(left, top);
+    ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle));
+    ctx.drawImage(deleteImg, -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
+  const deleteImg = new Image();
+  deleteImg.onload = () => {
+    fabric.Object.prototype.controls.deleteControl = new fabric.Control({
+      x: -0.5,
+      y: -0.5,
+      offsetY: 0,
+      cursorStyle: "pointer",
+      mouseUpHandler: deleteObject,
+      render: renderIcon,
+      cornerSize: 24,
+    });
+  };
+  deleteImg.src = require("../assets/svg/icon-delete.svg");
+};
+/**
+ * Overwrite the default control style in the prototype
+ * @param {fabric} fabric - The fabric.js library
+ */
+const setDefaultCanvasControlsStyle = (fabric) => {
+  const canvasControlsOption = {
+    tl: false,
+    tr: true,
+    bl: true,
+    br: true,
+    ml: false,
+    mt: false,
+    mr: false,
+    mb: false,
+    mtr: false,
+  };
+  fabric.Object.prototype.set({
+    borderColor: "rgba(12, 140, 233, 1)",
+    cornerColor: "rgba(12, 140, 233, 1)",
+    cornerStyle: "rect",
+    cornerSize: "5",
+  });
+  fabric.Object.prototype.setControlsVisibility(canvasControlsOption);
+};
+/**
  * Set the canvas background Image with the provided one
  * @param {fabric.Canvas} fabricCanvasObj - The instance of the fabric.Canvas object to mount the image on
  * @param {fabric.Image} backgroundImage - The fabric.image instance to set the background of the canvas as
@@ -303,6 +361,18 @@ const insertTextOnCanvas = (text) => {
   });
   fabricCanvas.add(textToAdd);
 };
+/**
+ * Create a link with the url for downloading the file
+ * @param {string} filePath - url
+ * @param {string} fileName - the filename for the file to download
+ */
+const downloadFile = (filePath, fileName) => {
+  const link = document.createElement("a");
+  link.href = filePath;
+  link.download = fileName;
+  link.target = "_blank";
+  link.click();
+};
 // Handlers
 const actionHandlers = {
   完成簽署: () => {
@@ -321,12 +391,11 @@ const actionHandlers = {
     newPDF.addImage(image, "png", 0, 0, width, height);
     try {
       await newPDF.save(props.fileName, { returnPromise: true });
-      window.open(
+      downloadFile(
         newPDF.output("bloburl", { filename: props.fileName }),
-        "_blank"
+        props.fileName
       );
       await saveToFileHistory(getCurrentDate(), props.fileName);
-      // Redirect the user to another component
       emit("downloadSucceeded");
     } catch (err) {
       emit("downloadFailed");
@@ -383,7 +452,7 @@ const handleAppendDate = () => {
 };
 const handleAppendText = (textToAppend) => {
   if (textToAppend) {
-    const textBox = new fabric.Textbox(textToAppend, {
+    const textBox = new fabric.Text(textToAppend, {
       width: 200,
       fontSize: 24,
     });
@@ -412,6 +481,8 @@ const handleGoHome = async () => {
 };
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {
+  setDefaultCanvasControlsStyle(fabric);
+  addDefaultDeleteBtnToCanvasElement(fabric);
   if (canvas.value) fabricCanvas = new fabric.Canvas(canvas.value);
   setCanvasBackgroundImage(fabricCanvas, canvasBackgroundImage.value);
   setAspectRatioOnCanvas(canvasBackgroundImage.value);

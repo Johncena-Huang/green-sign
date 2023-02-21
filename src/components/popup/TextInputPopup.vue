@@ -67,7 +67,6 @@ const handleConfirm = () => {
   emit("text-inserted", message.value);
 };
 const onEsc = () => {
-  console.log("esc");
   if (!props.show) return;
   emit("popup-closed");
 };

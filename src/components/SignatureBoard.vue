@@ -75,8 +75,8 @@
               @mousedown.prevent="handleMouseDown"
               @mousemove.prevent="handleMouseMove"
               @mouseenter.prevent="handleMouseEnter"
-              @touchstart.prevent.passive="handleTouchStart"
-              @touchmove.prevent.passive="handleTouchMove"
+              @touchstart.prevent="handleTouchStart"
+              @touchmove.prevent="handleTouchMove"
               @touchend.prevent="handleStopTouching"
               @touchcancel.prevent="handleStopTouching"
             ></canvas>
@@ -446,6 +446,7 @@ $mobile-screen: 43em;
   &__canvas {
     background: #ffffff;
     border-radius: 26px;
+    touch-action: none;
   }
 }
 .signature-group {

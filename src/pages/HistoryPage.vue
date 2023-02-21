@@ -120,7 +120,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import TextSpinner from "src/components/TextSpinner.vue";
 import { db } from "src/dexie/dexie";

@@ -264,14 +264,15 @@ const viewerHandlers = {
   },
 };
 const handleResetState = () => {
-  phase.value = "upload";
-  file.value = null;
-  fileName = null;
-  viewerState.canvasBackgroundImage = null;
-  viewerState.signatureArray = [];
-  viewerState.pageCount = null;
-  viewerState.currentPage = 1;
-  viewerState.zoomLevel = 1;
+  window.location.reload();
+  // phase.value = "upload";
+  // file.value = null;
+  // fileName = null;
+  // viewerState.canvasBackgroundImage = null;
+  // viewerState.signatureArray = [];
+  // viewerState.pageCount = null;
+  // viewerState.currentPage = 1;
+  // viewerState.zoomLevel = 1;
 };
 // ======================= LIFE CYCLES =======================
 onMounted(() => {
