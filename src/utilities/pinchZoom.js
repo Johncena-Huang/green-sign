@@ -26,6 +26,7 @@ export default function (element, zoomInHandler, zoomOutHandler) {
   let dist1 = 0;
   const handleTouchMove = (ev) => {
     if (ev.targetTouches.length === 2 && ev.changedTouches.length === 2) {
+      ev.preventDefault();
       // Check if the two target touches are the same ones that started
       var dist2 = Math.hypot(
         //get rough estimate of new distance between fingers
@@ -59,11 +60,15 @@ export default function (element, zoomInHandler, zoomOutHandler) {
     // console.log("clear distance");
   };
   const throttledHandleMove = throttle(handleTouchMove, 250);
-  element.addEventListener("touchstart", handleTouchStart, { passive: true });
-  element.addEventListener("touchmove", throttledHandleMove, { passive: true });
-  element.addEventListener("touchend", handleStopTouching, { passive: true });
-  element.addEventListener("touchleave", handleStopTouching, { passive: true });
+  element.addEventListener("touchstart", handleTouchStart, { passive: false });
+  element.addEventListener("touchmove", throttledHandleMove, {
+    passive: false,
+  });
+  element.addEventListener("touchend", handleStopTouching, { passive: false });
+  element.addEventListener("touchleave", handleStopTouching, {
+    passive: false,
+  });
   element.addEventListener("touchcancel", handleStopTouching, {
-    passive: true,
+    passive: false,
   });
 }

@@ -40,7 +40,7 @@
     <div class="content-wrapper">
       <div class="viewer">
         <div class="viewer__inner" ref="innerViewer">
-          <canvas class="viewer__canvas" ref="canvas"> </canvas>
+          <canvas class="viewer__canvas" ref="canvas"></canvas>
         </div>
       </div>
       <div>
@@ -147,14 +147,15 @@ import {
   useAttrs,
   defineEmits,
 } from "vue";
-import { useQuasar } from "quasar";
 import useLeaveConfirmation from "src/composables/leaveConfirmation";
 import { db } from "src/dexie/dexie";
 import registerPinchZoom from "../utilities/pinchZoom.js";
 import SignaturePickerPopup from "./popup/SignaturePickerPopup.vue";
 import TextInputPopup from "./popup/TextInputPopup.vue";
-import { fabric } from "fabric"; // to wrap the HTML canvas element up with
 import { jsPDF } from "jspdf"; // For downloading the merged pdf file
+import FabricCanvas from "../utilities/fabricCanvas.js";
+import { useQuasar } from "quasar";
+const $q = useQuasar();
 const leaveConfirmationNotify = useLeaveConfirmation();
 // ======================= PROPS =======================
 const props = defineProps({
@@ -186,6 +187,8 @@ const emit = defineEmits([
 ]);
 // ======================= GETTER =======================
 const zoomLevelPercentage = computed(() => (zoomLevel.value * 100).toFixed(0)); // Deal with floating point number
+const originalFileName = computed(() => props.fileName.split(".")[0]);
+const originalFileExtension = computed(() => props.fileName.split(".")[1]);
 // ======================= DATA =======================
 // Static
 const toolsArray = [
@@ -244,96 +247,6 @@ const saveToFileHistory = async (date, fileName) => {
   await db.fileRecords.add(newRecord);
 };
 /**
- * Customize the default delete button on all the newly appended element controls.
- * @param {fabric} fabric - The fabric.js library
- */
-const addDefaultDeleteBtnToCanvasElement = (fabric) => {
-  function deleteObject(eventData, transform) {
-    const target = transform.target;
-    const canvas = target.canvas;
-    canvas.remove(target);
-    canvas.requestRenderAll();
-  }
-  function renderIcon(ctx, left, top, styleOverride, fabricObject) {
-    const size = this.cornerSize;
-    ctx.save();
-    ctx.translate(left, top);
-    ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle));
-    ctx.drawImage(deleteImg, -size / 2, -size / 2, size, size);
-    ctx.restore();
-  }
-  const deleteImg = new Image();
-  deleteImg.onload = () => {
-    fabric.Object.prototype.controls.deleteControl = new fabric.Control({
-      x: -0.5,
-      y: -0.5,
-      offsetY: 0,
-      cursorStyle: "pointer",
-      mouseUpHandler: deleteObject,
-      render: renderIcon,
-      cornerSize: 24,
-    });
-  };
-  deleteImg.src = require("../assets/svg/icon-delete.svg");
-};
-/**
- * Overwrite the default control style in the prototype
- * @param {fabric} fabric - The fabric.js library
- */
-const setDefaultCanvasControlsStyle = (fabric) => {
-  const canvasControlsOption = {
-    tl: false,
-    tr: true,
-    bl: true,
-    br: true,
-    ml: false,
-    mt: false,
-    mr: false,
-    mb: false,
-    mtr: false,
-  };
-  fabric.Object.prototype.set({
-    borderColor: "rgba(12, 140, 233, 1)",
-    cornerColor: "rgba(12, 140, 233, 1)",
-    cornerStyle: "rect",
-    cornerSize: "5",
-  });
-  fabric.Object.prototype.setControlsVisibility(canvasControlsOption);
-};
-/**
- * Set the canvas background Image with the provided one
- * @param {fabric.Canvas} fabricCanvasObj - The instance of the fabric.Canvas object to mount the image on
- * @param {fabric.Image} backgroundImage - The fabric.image instance to set the background of the canvas as
- */
-const setCanvasBackgroundImage = (fabricCanvasObj, backgroundImage) => {
-  fabricCanvasObj.requestRenderAll();
-  fabricCanvasObj.setWidth(backgroundImage.width);
-  fabricCanvasObj.setHeight(backgroundImage.height);
-  fabricCanvasObj.setBackgroundImage(
-    backgroundImage,
-    fabricCanvasObj.renderAll.bind(fabricCanvasObj)
-  );
-};
-/**
- * Set the "aspect ratio" of the background image on the canvas element
-   for responsive design at breakpoint "688px"(mobile)
- * @param {fabric.Image} backgroundImage - The fabric.image instance to set the background of the canvas as
- */
-const setAspectRatioOnCanvas = (backgroundImage) => {
-  const aspectRatio = (backgroundImage.width / backgroundImage.height).toFixed(
-    2
-  );
-  document.querySelectorAll("viewer__canvas").forEach((ele) => {
-    ele.style.setProperty("aspect-ratio", aspectRatio);
-  });
-};
-const getViewportWidth = () => {
-  return Math.max(
-    document.documentElement.clientWidth || 0,
-    window.innerWidth || 0
-  );
-};
-/**
  * Get the current date in the format 'yyyy/mm/dd'
  * @return {string} - The formatted current date string
  */
@@ -348,20 +261,6 @@ const getCurrentDate = () => {
   return formattedDate;
 };
 /**
- * Insert the text on the canvas wrapper
- * @param {string} text - the text string to insert
- */
-const insertTextOnCanvas = (text) => {
-  const textToAdd = new fabric.Text(text, {
-    top: 0,
-    left: 0,
-    scaleX: 1,
-    scaleY: 1,
-    fontSize: 24,
-  });
-  fabricCanvas.add(textToAdd);
-};
-/**
  * Create a link with the url for downloading the file
  * @param {string} filePath - url
  * @param {string} fileName - the filename for the file to download
@@ -371,35 +270,37 @@ const downloadFile = (filePath, fileName) => {
   link.href = filePath;
   link.download = fileName;
   link.target = "_blank";
+  if ($q.platform.is.desktop) return;
   link.click();
 };
 // Handlers
 const actionHandlers = {
   完成簽署: () => {
-    fabricCanvas.forEachObject((obj) => {
-      obj.selectable = false;
-      obj.hoverCursor = "default";
-    });
-    fabricCanvas.renderAll();
+    fabricCanvas.fixCanvas();
     action.value = "儲存";
   },
   儲存: async () => {
-    const newPDF = new jsPDF();
-    const image = fabricCanvas.toDataURL("image/png");
-    const width = newPDF.internal.pageSize.width;
-    const height = newPDF.internal.pageSize.height;
-    newPDF.addImage(image, "png", 0, 0, width, height);
-    try {
-      await newPDF.save(props.fileName, { returnPromise: true });
-      downloadFile(
-        newPDF.output("bloburl", { filename: props.fileName }),
-        props.fileName
+    if (originalFileExtension.value === "pdf") {
+      const newPDF = new jsPDF();
+      const image = fabricCanvas.convertToImage();
+      const width = newPDF.internal.pageSize.width;
+      const height = newPDF.internal.pageSize.height;
+      newPDF.addImage(image, "png", 0, 0, width, height);
+      try {
+        await newPDF.save(props.fileName, { returnPromise: true });
+        const newFile = newPDF.output("bloburl", { filename: props.fileName });
+        downloadFile(newFile, originalFileName.value);
+        await saveToFileHistory(getCurrentDate(), props.fileName);
+      } catch (error) {
+        emit("downloadFailed");
+      }
+    } else {
+      const image = fabricCanvas.toDataURL(
+        `image/${originalFileExtension.value}`
       );
-      await saveToFileHistory(getCurrentDate(), props.fileName);
-      emit("downloadSucceeded");
-    } catch (err) {
-      emit("downloadFailed");
+      downloadFile(image, originalFileName.value);
     }
+    emit("downloadSucceeded");
   },
 };
 const toggleAction = () => {
@@ -433,30 +334,20 @@ const toggleTextInputPopup = () => {
 };
 const handleAppendSignature = (index) => {
   const signatureToAppend = signatureArray.value[index].dataURL;
-  fabric.Image.fromURL(signatureToAppend, (img) => {
-    img.top = 0;
-    img.left = 0;
-    img.scaleX = 1;
-    img.scaleY = 1;
-    fabricCanvas.add(img);
-    isSignaturePopupOpen.value = false;
-  });
+  fabricCanvas.appendSignature(signatureToAppend);
+  isSignaturePopupOpen.value = false;
 };
 const handleAppendCheckMark = () => {
   const checkMark = "\u2713";
-  insertTextOnCanvas(checkMark);
+  fabricCanvas.appendText(checkMark);
 };
 const handleAppendDate = () => {
   const currentDateStr = getCurrentDate();
-  insertTextOnCanvas(currentDateStr);
+  fabricCanvas.appendText(currentDateStr);
 };
 const handleAppendText = (textToAppend) => {
   if (textToAppend) {
-    const textBox = new fabric.Text(textToAppend, {
-      width: 200,
-      fontSize: 24,
-    });
-    fabricCanvas.add(textBox);
+    fabricCanvas.appendText(textToAppend);
   }
   toggleTextInputPopup(); // Close popup
 };
@@ -481,11 +372,8 @@ const handleGoHome = async () => {
 };
 // ======================= LIFE CYCLE HOOKS =======================
 onMounted(() => {
-  setDefaultCanvasControlsStyle(fabric);
-  addDefaultDeleteBtnToCanvasElement(fabric);
-  if (canvas.value) fabricCanvas = new fabric.Canvas(canvas.value);
-  setCanvasBackgroundImage(fabricCanvas, canvasBackgroundImage.value);
-  setAspectRatioOnCanvas(canvasBackgroundImage.value);
+  if (canvas.value)
+    fabricCanvas = new FabricCanvas(canvas.value, canvasBackgroundImage.value);
   registerPinchZoom(innerViewer.value, handleZoomIn, handleZoomOut);
   window.addEventListener("beforeunload", handleBeforeUnload);
 });
@@ -495,8 +383,11 @@ onUnmounted(() => {
 // ======================= WATCHER =======================
 // For handling page update from pagination
 watch(canvasBackgroundImage, (newBackground, _) => {
-  setCanvasBackgroundImage(fabricCanvas, newBackground);
-  setAspectRatioOnCanvas(canvasBackgroundImage.value);
+  fabricCanvas.setBackgroundImage(newBackground);
+  fabricCanvas.setAspectRatioOnCanvas(
+    canvasBackgroundImage.value,
+    "viewer__canvas"
+  );
 });
 </script>
 
@@ -674,6 +565,9 @@ $mobile-screen: 43em;
     .pagination-control {
       margin: 0;
       flex: 1;
+      &__inner-wrapper {
+        gap: 0;
+      }
     }
   }
 

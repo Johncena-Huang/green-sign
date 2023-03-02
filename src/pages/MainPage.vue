@@ -144,18 +144,29 @@ const loadDataToImage = (dataUrl) => {
   });
 };
 /**
+ * Returns the maximum width of the viewport.
+ * @function
+ * @returns {number} The maximum width of the viewport.
+ */
+const getViewportWidth = () => {
+  return Math.max(
+    document.documentElement.clientWidth || 0,
+    window.innerWidth || 0
+  );
+};
+/**
  * Draw the image on the canvas element
  * @param {HTMLCanvasElement} canvasReference - The canvas element to draw on
  * @param {HTMLImageElement} image - The image to be drawn
  * @param {number} [zoomLevel = 1] - The zoom level to render the image at
  */
 const drawImageOnCanvas = (canvasReference, image, zoomLevel = 1) => {
-  const imageHeight = image.height * zoomLevel;
-  const imageWidth = image.width * zoomLevel;
-  canvasReference.height = imageHeight;
-  canvasReference.width = imageWidth;
+  const viewportWidth = (getViewportWidth() - 32) * zoomLevel;
+  const viewportHeight = (viewportWidth / image.width) * image.height;
+  canvasReference.height = viewportHeight;
+  canvasReference.width = viewportWidth;
   const context = canvasReference.getContext("2d");
-  context.drawImage(image, 0, 0, imageHeight, imageWidth);
+  context.drawImage(image, 0, 0, viewportWidth, viewportHeight);
 };
 /**
  * Convert the content rendered on canvas into image
@@ -177,7 +188,7 @@ const renderFileToImage = () => {
   return new Promise((resolve) => {
     const fileType = file.value.type;
     const isPdfFile = fileType === "application/pdf";
-    fileName = file.value.name.split(".")[0];
+    fileName = file.value.name;
     const reader = new FileReader();
     reader.onload = async function () {
       if (isPdfFile) {
@@ -186,7 +197,7 @@ const renderFileToImage = () => {
           viewerState.currentPage,
           viewerState.zoomLevel
         );
-        const pdfImage = await convertToImage(offscreenCanvas.value, 1);
+        const pdfImage = await convertToImage(offscreenCanvas.value);
         viewerState.canvasBackgroundImage = pdfImage;
         resolve();
       } else {
